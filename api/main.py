@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import random
 
@@ -28,12 +28,43 @@ facts = [
     "Octopuses have three hearts."
 ]
 
-@app.get("/")           #endpoint, or route, always starts with a forward slash
-def default_route():    #route handler function
+# Data in this example is stored as a variable, in memory.
+# This data will be erased with every restart of the server;
+# might even be reset in between calls to the back-end.
+# So this is not a proper, permanent and persistent store of data.
+# For that we need to use a database, as we'll see next week.
+
+data_list = []  # list to store strings; empty to start 
+
+# --- GET Endpoint ---
+@app.get("/items")
+def get_items():
     """
-    This is the default endpoint for this back-end.
+    Fetches the entire list of items.
     """
-    return "You have reached the default route. Back-end server is listening..."
+    # Simply return the list
+    return {"items": data_list}
+
+# --- POST Endpoint --- 
+@app.post("/item")
+def add_item(itemId = Body(...), itemText = Body(...)):
+    """
+    Adds an item to the list.    
+    """
+    if not itemId or not itemText:
+        # Basic validation
+        raise HTTPException(status_code=400, detail="Item id and text must be passed")
+        
+    itemDict = { "id":itemId,"text":itemText}    
+    data_list.append(itemDict)
+    
+    # Return a success message and the item that was added
+    return {"message": "Item added successfully", "item": itemDict }
+
+# Basic root endpoint for testing
+@app.get("/")
+def read_root():
+    return {"message": "backend server is listening..."}
 
 @app.get("/random-fact")
 async def get_random_fact():
